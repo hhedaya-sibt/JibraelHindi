@@ -6,6 +6,7 @@ import Statement from './components/Statement';
 import Release from './components/Release';
 import Payment from './components/Payment';
 import Success from './components/Success';
+import StateSelection from './components/StateSelection';
 
 const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<Step>('login');
@@ -32,6 +33,13 @@ const App: React.FC = () => {
       adminFees: 50.00,
       netAmount: 950.00
     });
+    // Go to State Selection instead of straight to Statement
+    setCurrentStep('state-selection');
+  };
+
+  const handleStateSelected = (state: string) => {
+    // In a real app, you might save this state selection to the backend here
+    console.log("User selected state:", state);
     setCurrentStep('statement');
   };
 
@@ -46,6 +54,17 @@ const App: React.FC = () => {
   const handlePaymentSubmitted = (details: PaymentDetails) => {
     setPaymentDetails(details);
     setCurrentStep('success');
+  };
+
+  // Helper to determine progress bar width
+  const getProgressWidth = () => {
+    switch (currentStep) {
+      case 'state-selection': return 'w-1/4';
+      case 'statement': return 'w-1/2';
+      case 'release': return 'w-3/4';
+      case 'payment': return 'w-full';
+      default: return 'w-0';
+    }
   };
 
   return (
@@ -74,24 +93,29 @@ const App: React.FC = () => {
           {/* Progress Bar (Visual indicator) */}
           {currentStep !== 'login' && currentStep !== 'success' && (
             <div className="bg-slate-100 h-2 w-full flex">
-              <div className={`h-full bg-brand-blue transition-all duration-500 ${
-                currentStep === 'statement' ? 'w-1/3' : 
-                currentStep === 'release' ? 'w-2/3' : 'w-full'
-              }`}></div>
+              <div className={`h-full bg-brand-blue transition-all duration-500 ${getProgressWidth()}`}></div>
             </div>
           )}
 
           <div className="p-6 md:p-8">
             {currentStep === 'login' && <Login onLogin={handleLogin} />}
+            
+            {currentStep === 'state-selection' && (
+              <StateSelection onNext={handleStateSelected} />
+            )}
+
             {currentStep === 'statement' && userData && (
               <Statement user={userData} onNext={handleStatementSigned} />
             )}
+            
             {currentStep === 'release' && userData && (
               <Release user={userData} onNext={handleReleaseSigned} onBack={() => setCurrentStep('statement')} />
             )}
+            
             {currentStep === 'payment' && userData && (
               <Payment user={userData} onSubmit={handlePaymentSubmitted} onBack={() => setCurrentStep('release')} />
             )}
+            
             {currentStep === 'success' && userData && paymentDetails && (
               <Success user={userData} payment={paymentDetails} />
             )}

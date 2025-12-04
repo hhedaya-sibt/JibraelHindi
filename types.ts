@@ -1,4 +1,4 @@
-export type Step = 'login' | 'statement' | 'release' | 'payment' | 'success';
+export type Step = 'login' | 'state-selection' | 'statement' | 'release' | 'payment' | 'success';
 
 export type PaymentMethodType = 'ZELLE' | 'VENMO' | 'PAYPAL' | 'CASHAPP' | 'CHECK';
 

@@ -16,11 +16,15 @@ const Success: React.FC<SuccessProps> = ({ user, payment }) => {
         </div>
       </div>
       
-      <h2 className="text-3xl font-serif font-bold text-slate-900">Submission Complete</h2>
+      <h2 className="text-3xl font-serif font-bold text-slate-900">Thank You</h2>
       
-      <div className="space-y-2 text-slate-600">
-        <p>Thank you, {user.firstName}.</p>
-        <p>Your release has been recorded and your payment request has been processed.</p>
+      <div className="space-y-4 text-slate-700 max-w-md mx-auto">
+        <p className="text-lg">
+          Thank you for signing your settlement documents.
+        </p>
+        <p className="font-medium text-brand-blue text-lg">
+          You can expect to receive payment by March of 2026.
+        </p>
       </div>
 
       <div className="bg-slate-50 rounded-lg border border-slate-200 p-6 max-w-sm mx-auto mt-8 text-left">
@@ -52,10 +56,6 @@ const Success: React.FC<SuccessProps> = ({ user, payment }) => {
            Download Confirmation PDF
          </button>
       </div>
-      
-      <p className="text-xs text-slate-400 mt-8">
-        You may close this window. A confirmation text/email has been sent to you.
-      </p>
     </div>
   );
 };
