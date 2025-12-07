@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UserData, PaymentMethodType, PaymentDetails } from '../types';
-import { ArrowLeft, DollarSign, Smartphone, Landmark, Mail, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Smartphone, Landmark, Mail, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 interface PaymentProps {
   user: UserData;
@@ -8,29 +8,59 @@ interface PaymentProps {
   onBack: () => void;
 }
 
+const US_STATES = [
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia",
+  "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland",
+  "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
+  "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+  "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
+];
+
 const Payment: React.FC<PaymentProps> = ({ user, onSubmit, onBack }) => {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodType | null>(null);
+  
+  // Electronic Payment State
   const [identifier, setIdentifier] = useState('');
   const [confirmIdentifier, setConfirmIdentifier] = useState('');
+
+  // Paper Check State
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('Florida');
+  const [zip, setZip] = useState('');
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const methods = [
     { id: 'ZELLE', name: 'Zelle', color: 'bg-[#6D1ED4]', text: 'text-white', icon: Smartphone, placeholder: 'Mobile Number or Email' },
     { id: 'VENMO', name: 'Venmo', color: 'bg-[#008CFF]', text: 'text-white', icon: Smartphone, placeholder: 'Venmo Handle (@username)' },
     { id: 'PAYPAL', name: 'PayPal', color: 'bg-[#003087]', text: 'text-white', icon: Mail, placeholder: 'PayPal Email' },
-    { id: 'CASHAPP', name: 'Cash App', color: 'bg-[#00D632]', text: 'text-white', icon: DollarSign, placeholder: 'Cashtag ($cashtag)' },
+    // Cash App removed as requested
     { id: 'CHECK', name: 'Paper Check', color: 'bg-slate-600', text: 'text-white', icon: Landmark, placeholder: 'Confirm Mailing Address' },
   ];
 
-  const isValid = selectedMethod && identifier && identifier === confirmIdentifier;
+  const isCheck = selectedMethod === 'CHECK';
+
+  // Validation Logic
+  const isElectronicValid = !isCheck && identifier && identifier === confirmIdentifier;
+  const isCheckValid = isCheck && address.trim() !== '' && city.trim() !== '' && zip.trim() !== '';
+  const isValid = selectedMethod && (isCheck ? isCheckValid : isElectronicValid);
 
   const handleSubmit = () => {
     if (!isValid || !selectedMethod) return;
+    
     setIsSubmitting(true);
+    
+    // Construct the account identifier based on method
+    let finalIdentifier = identifier;
+    if (selectedMethod === 'CHECK') {
+      finalIdentifier = `${address}, ${city}, ${state} ${zip}`;
+    }
+
     setTimeout(() => {
       onSubmit({
         method: selectedMethod,
-        accountIdentifier: identifier,
+        accountIdentifier: finalIdentifier,
         confirmed: true
       });
     }, 1500);
@@ -55,8 +85,10 @@ const Payment: React.FC<PaymentProps> = ({ user, onSubmit, onBack }) => {
               key={m.id}
               onClick={() => {
                 setSelectedMethod(m.id as PaymentMethodType);
+                // Reset states when switching
                 setIdentifier('');
                 setConfirmIdentifier('');
+                // Keep address info if switching back and forth, or reset if desired. Keeping for UX.
               }}
               className={`relative flex items-center p-4 rounded-lg border-2 transition-all duration-200 ${
                 isSelected 
@@ -89,42 +121,95 @@ const Payment: React.FC<PaymentProps> = ({ user, onSubmit, onBack }) => {
       {selectedMethod && (
         <div className="bg-slate-50 p-5 rounded-lg border border-slate-200 space-y-4 animate-slide-down">
           <h3 className="font-medium text-slate-900 flex items-center">
-            Enter {methods.find(m => m.id === selectedMethod)?.name} Details
+            {isCheck ? 'Mailing Address for Check' : `Enter ${methods.find(m => m.id === selectedMethod)?.name} Details`}
           </h3>
           
-          <div>
-            <label className="block text-xs font-medium text-slate-500 uppercase mb-1">
-              {methods.find(m => m.id === selectedMethod)?.placeholder}
-            </label>
-            <input
-              type="text"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              className="block w-full px-3 py-3 border border-slate-300 rounded-md focus:ring-brand-blue focus:border-brand-blue"
-              placeholder={methods.find(m => m.id === selectedMethod)?.placeholder}
-            />
-          </div>
+          {isCheck ? (
+            // Paper Check Fields
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Street Address</label>
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="block w-full px-3 py-3 border border-slate-300 rounded-md focus:ring-brand-blue focus:border-brand-blue"
+                  placeholder="123 Main St, Apt 4B"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 uppercase mb-1">City</label>
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="block w-full px-3 py-3 border border-slate-300 rounded-md focus:ring-brand-blue focus:border-brand-blue"
+                    placeholder="City"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 uppercase mb-1">State</label>
+                  <select
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    className="block w-full px-3 py-3 border border-slate-300 rounded-md focus:ring-brand-blue focus:border-brand-blue bg-white"
+                  >
+                    {US_STATES.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 uppercase mb-1">Zip Code</label>
+                <input
+                  type="text"
+                  value={zip}
+                  onChange={(e) => setZip(e.target.value)}
+                  className="block w-full px-3 py-3 border border-slate-300 rounded-md focus:ring-brand-blue focus:border-brand-blue"
+                  placeholder="12345"
+                />
+              </div>
+            </div>
+          ) : (
+            // Electronic Payment Fields
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-500 uppercase mb-1">
+                  {methods.find(m => m.id === selectedMethod)?.placeholder}
+                </label>
+                <input
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  className="block w-full px-3 py-3 border border-slate-300 rounded-md focus:ring-brand-blue focus:border-brand-blue"
+                  placeholder={methods.find(m => m.id === selectedMethod)?.placeholder}
+                />
+              </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-500 uppercase mb-1">
-              Confirm {methods.find(m => m.id === selectedMethod)?.placeholder}
-            </label>
-            <input
-              type="text"
-              value={confirmIdentifier}
-              onChange={(e) => setConfirmIdentifier(e.target.value)}
-              onPaste={(e) => e.preventDefault()} // Prevent copy-paste errors
-              className={`block w-full px-3 py-3 border rounded-md focus:ring-brand-blue focus:border-brand-blue ${
-                 identifier && confirmIdentifier && identifier !== confirmIdentifier 
-                 ? 'border-red-300 bg-red-50' 
-                 : 'border-slate-300'
-              }`}
-              placeholder="Re-enter to confirm"
-            />
-            {identifier && confirmIdentifier && identifier !== confirmIdentifier && (
-              <p className="text-xs text-red-600 mt-1">Fields do not match.</p>
-            )}
-          </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 uppercase mb-1">
+                  Confirm {methods.find(m => m.id === selectedMethod)?.placeholder}
+                </label>
+                <input
+                  type="text"
+                  value={confirmIdentifier}
+                  onChange={(e) => setConfirmIdentifier(e.target.value)}
+                  onPaste={(e) => e.preventDefault()}
+                  className={`block w-full px-3 py-3 border rounded-md focus:ring-brand-blue focus:border-brand-blue ${
+                     identifier && confirmIdentifier && identifier !== confirmIdentifier 
+                     ? 'border-red-300 bg-red-50' 
+                     : 'border-slate-300'
+                  }`}
+                  placeholder="Re-enter to confirm"
+                />
+                {identifier && confirmIdentifier && identifier !== confirmIdentifier && (
+                  <p className="text-xs text-red-600 mt-1">Fields do not match.</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -139,9 +224,9 @@ const Payment: React.FC<PaymentProps> = ({ user, onSubmit, onBack }) => {
             <div className="mt-2 text-xs text-red-700 leading-relaxed">
               <p>
                 By selecting this payment method and entering your account information, you are accepting responsibility 
-                for accurately entering your account details. You further agree to hold The Law Offices of Jibrael S. Hindi 
+                for accurately entering your details. You further agree to hold The Law Offices of Jibrael S. Hindi 
                 and Power Admin harmless for any claims arising out of the use of the account or electronic payment platform, 
-                including funds sent to an incorrect account due to user error.
+                including funds sent to an incorrect account/address due to user error.
               </p>
             </div>
           </div>
