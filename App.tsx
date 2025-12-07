@@ -20,11 +20,11 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
   }, [currentStep]);
 
-  const handleLogin = (id: string, pin: string) => {
+  const handleLogin = (pin: string) => {
     // Simulate API verification
-    // For demo purposes, we accept any input but pre-fill mock data
+    // Since we removed the ID input, we assign a mock ID here
     setUserData({
-      uniqueId: id,
+      uniqueId: "CLA-8821",
       pin: pin,
       firstName: "Jane",
       lastName: "Doe",
